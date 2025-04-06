@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head>
+    <title>关于 - So Novel</title>
+</head>
+<body>
+    <section>
+        <div class="text-center mb-5">
+            <img th:src="@{/static/images/logo.png}" alt="So Novel Logo" style="max-width: 128px;">
+            <h1 class="mt-3">So Novel</h1>
+            <p class="lead">网络小说搜索与下载工具</p>
+            <p>
+                <span class="badge bg-primary" th:text="'v' + ${version}"></span>
+            </p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">项目介绍</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>So Novel 是一个强大的网络小说搜索与下载工具，支持多书源搜索和多格式导出。</p>
+                        <p>
+                            适合用户：既想免费看正版新书，又想追求绝佳阅读体验的网络文学爱好者。
+                        </p>
+                        <p>
+                            对于完本小说，本工具同样可以搜索下载。若出现错别字、排版等问题，建议自行搜索下载对应精校版。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">主要功能</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li>根据书名、作者，搜索&下载小说</li>
+                            <li>导出格式：EPUB、TXT、HTML（支持翻页）</li>
+                            <li>多书源支持</li>
+                            <li>批量下载</li>
+                            <li>Web界面与API接口</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">API文档</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>So Novel 提供了REST API接口，可以在其他应用中调用：</p>
+                        
+                        <div class="mb-3">
+                            <h6>搜索接口</h6>
+                            <pre><code>GET /api/search?keyword=关键词</code></pre>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>指定书源搜索</h6>
+                            <pre><code>GET /api/search/{sourceId}?keyword=关键词</code></pre>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>获取所有书源</h6>
+                            <pre><code>GET /api/sources</code></pre>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>创建下载任务</h6>
+                            <pre><code>POST /api/download?bookId=书籍ID&format=epub</code></pre>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>获取任务状态</h6>
+                            <pre><code>GET /api/download/{taskId}</code></pre>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>获取所有任务</h6>
+                            <pre><code>GET /api/downloads</code></pre>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>取消任务</h6>
+                            <pre><code>DELETE /api/download/{taskId}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">项目链接</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            <i class="bi bi-github"></i>
+                            <a href="https://github.com/freeok/so-novel" target="_blank">GitHub 项目地址</a>
+                        </p>
+                        <p>
+                            <i class="bi bi-book"></i>
+                            <a href="https://github.com/freeok/so-novel/blob/main/BOOK_SOURCES.md" target="_blank">支持的书源一览</a>
+                        </p>
+                        <p>
+                            <i class="bi bi-question-circle"></i>
+                            <a href="https://github.com/freeok/so-novel/issues" target="_blank">问题反馈</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</body>
+</html> 

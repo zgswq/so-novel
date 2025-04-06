@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head>
+    <title>下载详情 - So Novel</title>
+</head>
+<body>
+    <section>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">下载详情</h1>
+            <div>
+                <a th:href="@{/downloads}" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-arrow-left me-1"></i> 返回列表
+                </a>
+                <button id="refreshBtn" class="btn btn-primary">
+                    <i class="bi bi-arrow-clockwise me-1"></i> 刷新
+                </button>
+            </div>
+        </div>
+
+        <!-- 错误提示 -->
+        <div class="alert alert-danger" th:if="${task == null}">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> 任务不存在或已被删除
+        </div>
+
+        <!-- 任务详情 -->
+        <div class="card" th:if="${task != null}">
+            <div class="card-header">
+                <h5 class="mb-0">任务信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h4 th:text="${task.title}"></h4>
+                        <p th:if="${task.author}" th:text="'作者: ' + ${task.author}"></p>
+                        <p>
+                            <span class="badge bg-secondary me-2" th:text="'格式: ' + ${task.format}"></span>
+                            <span th:if="${task.status == 'PENDING'}" class="badge bg-warning">等待中</span>
+                            <span th:if="${task.status == 'RUNNING'}" class="badge bg-primary">下载中</span>
+                            <span th:if="${task.status == 'COMPLETED'}" class="badge bg-success">完成</span>
+                            <span th:if="${task.status == 'FAILED'}" class="badge bg-danger">失败</span>
+                            <span th:if="${task.status == 'CANCELED'}" class="badge bg-secondary">已取消</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-md-end">
+                            <p th:text="'创建时间: ' + ${#temporals.format(task.createTime, 'yyyy-MM-dd HH:mm:ss')}"></p>
+                            <p th:if="${task.finishTime != null}" 
+                               th:text="'完成时间: ' + ${#temporals.format(task.finishTime, 'yyyy-MM-dd HH:mm:ss')}"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 下载进度 -->
+                <div class="mb-4">
+                    <h5>下载进度</h5>
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar" role="progressbar" 
+                             th:style="'width: ' + ${task.progress} + '%'" 
+                             th:text="${task.progress} + '%'"></div>
+                    </div>
+                    <div class="text-center mt-2">
+                        <small th:text="'章节: ' + ${task.downloadedChapters} + ' / ' + ${task.totalChapters}"></small>
+                    </div>
+                </div>
+
+                <!-- 下载链接或错误信息 -->
+                <div class="mt-4">
+                    <div th:if="${task.status == 'COMPLETED'}" class="text-center">
+                        <a th:if="${task.downloadUrl != null}" 
+                           th:href="${task.downloadUrl}" 
+                           class="btn btn-success btn-lg" download>
+                            <i class="bi bi-download me-2"></i> 下载文件
+                        </a>
+                    </div>
+                    
+                    <div th:if="${task.status == 'FAILED' && task.errorMessage != null}" class="alert alert-danger">
+                        <h5>错误信息</h5>
+                        <pre th:text="${task.errorMessage}" class="mb-0"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="mt-4" th:if="${task != null && task.status == 'RUNNING'}">
+            <button id="cancelBtn" class="btn btn-danger" th:attr="data-task-id=${task.taskId}">
+                <i class="bi bi-x-circle me-2"></i> 取消下载
+            </button>
+        </div>
+
+        <!-- JavaScript -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // 刷新按钮
+                document.getElementById('refreshBtn').addEventListener('click', function() {
+                    window.location.reload();
+                });
+                
+                // 取消按钮
+                const cancelBtn = document.getElementById('cancelBtn');
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', function() {
+                        const taskId = this.getAttribute('data-task-id');
+                        cancelTask(taskId);
+                    });
+                }
+                
+                // 取消任务
+                function cancelTask(taskId) {
+                    if (confirm('确定要取消此下载任务吗？')) {
+                        fetch('/api/download/' + taskId, {
+                            method: 'DELETE'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.code === 0 && data.data === true) {
+                                alert('任务已取消');
+                                window.location.reload();
+                            } else {
+                                alert('取消任务失败: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('请求失败，请稍后重试');
+                        });
+                    }
+                }
+                
+                // 自动刷新运行中的任务
+                const taskStatus = document.querySelector('.badge.bg-primary, .badge.bg-warning');
+                if (taskStatus) {
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 3000); // 每3秒刷新一次
+                }
+            });
+        </script>
+    </section>
+</body>
+</html> 

@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: so-novel
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+  mvc:
+    static-path-pattern: /static/**
+
+# 自定义配置
+so-novel:
+  # 应用程序版本
+  version: @project.version@
+  # 下载路径
+  download-path: ${user.dir}/downloads
+  # 文件扩展名(epub, txt, html)
+  extname: epub
+  # 最大并发下载任务数
+  max-concurrent-downloads: 5
+  # 每本书的保存目录格式，支持以下变量：{title}、{author}
+  book-dir-format: "{title}-{author}" 

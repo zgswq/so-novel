@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head>
+    <title>So Novel - 网络小说搜索与下载</title>
+</head>
+<body>
+    <section>
+        <!-- 首页横幅 -->
+        <div class="jumbotron bg-light p-5 rounded mb-4">
+            <h1 class="display-4">欢迎使用 So Novel</h1>
+            <p class="lead">
+                So Novel 是一个强大的网络小说搜索与下载工具，支持多书源搜索和多格式导出。
+            </p>
+            <hr class="my-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>搜索小说</h5>
+                    <form th:action="@{/search}" method="get">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" name="keyword" placeholder="输入书名或作者名..." required>
+                            <button class="btn btn-primary" type="submit">搜索</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-6">
+                    <h5>选择书源</h5>
+                    <form th:action="@{/search}" method="get" class="mb-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="keyword" placeholder="输入书名或作者名..." required>
+                            <select class="form-select" name="sourceId" style="max-width: 180px;">
+                                <option value="">-- 全部书源 --</option>
+                                <option th:each="source : ${sources}" 
+                                        th:value="${source.id}" 
+                                        th:text="${source.name}"></option>
+                            </select>
+                            <button class="btn btn-primary" type="submit">搜索</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能介绍 -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-search display-4 text-primary"></i>
+                        <h4 class="card-title mt-3">多书源搜索</h4>
+                        <p class="card-text">支持从多个书源搜索小说，提高小说查找成功率</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-download display-4 text-success"></i>
+                        <h4 class="card-title mt-3">多格式导出</h4>
+                        <p class="card-text">支持导出为EPUB、TXT、HTML等多种格式</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-laptop display-4 text-info"></i>
+                        <h4 class="card-title mt-3">Web界面</h4>
+                        <p class="card-text">提供Web界面，支持远程访问和API调用</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 书源列表 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">可用书源</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>书源名称</th>
+                                <th>状态</th>
+                                <th>描述</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="source : ${sources}">
+                                <td th:text="${source.id}"></td>
+                                <td th:text="${source.name}"></td>
+                                <td>
+                                    <span th:if="${source.available}" class="badge bg-success">可用</span>
+                                    <span th:unless="${source.available}" class="badge bg-danger">不可用</span>
+                                </td>
+                                <td th:text="${source.description}"></td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary"
+                                            th:attr="data-source-id=${source.id},data-source-name=${source.name}"
+                                            data-bs-toggle="modal" data-bs-target="#searchModal">
+                                        使用此书源
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(sources)}">
+                                <td colspan="5" class="text-center">暂无可用书源</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 搜索模态框 -->
+        <div class="modal fade" id="searchModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">使用书源搜索</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form th:action="@{/search}" method="get" id="sourceSearchForm">
+                            <input type="hidden" name="sourceId" id="modalSourceId">
+                            <div class="mb-3">
+                                <label for="modalSourceName" class="form-label">书源</label>
+                                <input type="text" class="form-control" id="modalSourceName" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="modalKeyword" class="form-label">关键词</label>
+                                <input type="text" class="form-control" id="modalKeyword" name="keyword" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" onclick="document.getElementById('sourceSearchForm').submit()">搜索</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const searchModal = document.getElementById('searchModal');
+                if (searchModal) {
+                    searchModal.addEventListener('show.bs.modal', function(event) {
+                        const button = event.relatedTarget;
+                        const sourceId = button.getAttribute('data-source-id');
+                        const sourceName = button.getAttribute('data-source-name');
+                        
+                        document.getElementById('modalSourceId').value = sourceId;
+                        document.getElementById('modalSourceName').value = sourceName;
+                    });
+                }
+            });
+        </script>
+    </section>
+</body>
+</html> 

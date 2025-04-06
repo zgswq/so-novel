@@ -1,0 +1,60 @@
+/* 全局样式 */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+/* 头部样式 */
+.navbar-brand {
+    font-weight: bold;
+}
+
+/* 卡片样式 */
+.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    font-weight: 500;
+}
+
+/* 按钮样式 */
+.btn {
+    border-radius: 6px;
+}
+
+/* 进度条样式 */
+.progress {
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+/* 表格样式 */
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+/* 搜索结果卡片样式 */
+.card .card-body {
+    padding: 1.2rem;
+}
+
+/* 徽章 */
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+}
+
+/* 页脚样式 */
+footer {
+    margin-top: 3rem;
+    padding: 1.5rem 0;
+    background-color: #343a40;
+    color: #fff;
+} 
