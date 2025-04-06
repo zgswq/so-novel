@@ -26,6 +26,9 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 import static org.fusesource.jansi.AnsiRenderer.render;
 
@@ -37,9 +40,34 @@ public class Crawler {
 
     private final AppConfig config;
     private String bookDir;
+    private BiConsumer<Integer, Integer> onChapterDownloaded;
+    private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
     public Crawler(AppConfig config) {
         this.config = config;
+    }
+    
+    /**
+     * 设置章节下载回调
+     * 
+     * @param onChapterDownloaded 回调函数，参数分别为：当前下载完成数量和总数量
+     */
+    public void setOnChapterDownloaded(BiConsumer<Integer, Integer> onChapterDownloaded) {
+        this.onChapterDownloaded = onChapterDownloaded;
+    }
+    
+    /**
+     * 取消下载
+     */
+    public void cancel() {
+        isCanceled.set(true);
+    }
+    
+    /**
+     * 检查是否已取消
+     */
+    public boolean isCanceled() {
+        return isCanceled.get();
     }
 
     /**
@@ -96,22 +124,82 @@ public class Crawler {
         ExecutorService executor = Executors.newFixedThreadPool(autoThreads);
         // 阻塞主线程，用于计时
         CountDownLatch latch = new CountDownLatch(toc.size());
+        // 用于记录已完成的章节数
+        AtomicInteger completedCount = new AtomicInteger(0);
 
         Console.log("<== 开始下载《{}》（{}） 共计 {} 章 | 线程数：{}", bookName, author, toc.size(), autoThreads);
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         ChapterParser chapterParser = new ChapterParser(config);
-        // 爬取&下载章节
-        toc.forEach(item -> executor.execute(() -> {
-            createChapterFile(chapterParser.parse(item, latch, sr));
-            Console.log("<== 待下载章节数：{}", latch.getCount());
-        }));
-
-        // 阻塞主线程，等待章节全部下载完毕
-        latch.await();
-        executor.shutdown();
-        new CrawlerPostHandler(config).handle(book, dir);
-        stopWatch.stop();
+        
+        try {
+            // 爬取&下载章节
+            for (Chapter chapter : toc) {
+                // 如果任务已取消，终止后续章节下载
+                if (isCanceled()) {
+                    Console.log("<== 下载任务已取消");
+                    break;
+                }
+                
+                executor.execute(() -> {
+                    try {
+                        // 如果任务已取消，不执行此章节下载
+                        if (isCanceled()) {
+                            latch.countDown();
+                            return;
+                        }
+                        
+                        Chapter parsedChapter = chapterParser.parse(chapter, latch, sr);
+                        createChapterFile(parsedChapter);
+                        int current = completedCount.incrementAndGet();
+                        
+                        // 如果任务已取消，不再回调进度更新
+                        if (isCanceled()) {
+                            return;
+                        }
+                        
+                        Console.log("<== 待下载章节数：{}", latch.getCount());
+                        
+                        // 触发回调
+                        if (onChapterDownloaded != null) {
+                            onChapterDownloaded.accept(current, toc.size());
+                        }
+                    } catch (Exception e) {
+                        if (!isCanceled()) {
+                            Console.error("下载章节失败: " + chapter.getTitle(), e);
+                        }
+                        latch.countDown();
+                    }
+                });
+            }
+            
+            // 等待所有章节下载完成或者取消
+            while (latch.getCount() > 0) {
+                // 如果任务已取消，不再等待所有章节完成
+                if (isCanceled()) {
+                    break;
+                }
+                
+                // 等待一段时间，避免CPU空转
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    if (isCanceled()) {
+                        break;
+                    }
+                }
+            }
+        } finally {
+            // 关闭线程池
+            executor.shutdownNow();
+            
+            // 如果没有取消，则进行后处理
+            if (!isCanceled()) {
+                new CrawlerPostHandler(config).handle(book, dir);
+            }
+            
+            stopWatch.stop();
+        }
 
         return stopWatch.getTotalTimeSeconds();
     }
@@ -125,7 +213,9 @@ public class Crawler {
         try (OutputStream fos = new BufferedOutputStream(new FileOutputStream(generatePath(chapter)))) {
             fos.write(chapter.getContent().getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
-            Console.error(e, e.getMessage());
+            if (!isCanceled()) {
+                Console.error(e, e.getMessage());
+            }
         }
     }
 
@@ -141,5 +231,4 @@ public class Crawler {
             default -> throw new IllegalStateException("暂不支持的下载格式: " + config.getExtName());
         };
     }
-
 }

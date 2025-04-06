@@ -83,7 +83,7 @@ public class Source {
                 .header("User-Agent", RandomUA.generate());
 
         // 启用配置文件的代理地址
-        if (config.getProxyEnabled() == 1) {
+        if (config != null && config.getProxyEnabled() != null && config.getProxyEnabled() == 1) {
             conn.proxy(config.getProxyHost(), config.getProxyPort());
         }
 
